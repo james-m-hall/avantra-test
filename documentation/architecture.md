@@ -161,6 +161,7 @@ Key parameters when monitoring service health include:
 4. Number of Pub/Sub retries
 5. Requests per second
 6. Error rates
+7. Costs (especially around data storage and access)
 
 There should be alert thresholds set up for these metrics and when the threshold is breached an alert should be triggered in one or more platforms e.g slack, email.
 
@@ -184,9 +185,13 @@ To help diagnose issues, appropriate logs should be output to Cloud Logging and 
 
 1. How variable is the JSON format?
 2. What's the expected volume of data? Both overall and for smallest and largest customers.
-3. What's the expected query pattern? This may affect how the table is structured
+   1. What's the forecasted growth rate?
+3. What's the expected query pattern? Who and what systems will access the data?
 4. How many customers/licenses do we have and where are the licenses stored? Answer to these questions will affect if and how we cache license hashes.
 5. How large (bytes) is each license. This will affect in memory cache size
 6. Are single tenants actually required?
 7. How much traffic does each customer get, is this enough to make a canary deployment in a single tenant useful?
-8. Are we concerned about license IDs being guessed or is it better to provide clearer error messages
+8. Are we concerned about license IDs being guessed or is it better to provide clearer error messages?
+9. What are the requirements for data freshness? I.e. how much delay can we tolerate between an event being generated and being queryable
+10. What requirements are we targeting for service availability?
+11. Do customers have data residency requirements?
