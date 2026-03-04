@@ -2,6 +2,13 @@ import { validateRequest } from "./validation";
 import { Request } from "@google-cloud/functions-framework";
 
 describe("validation", () => {
+  const validHeaders = {
+    "x-signature":
+      "35926ea99afa0cfef54d332f23d55572df9ac657a0e2fdd8dbeb4ebe01fa126e",
+    "x-license-id": "validlicenseid",
+    "content-type": "application/json",
+  };
+
   it.each([["GET"], ["PUT"], ["DELETE"], ["PATCH"]])(
     "should return 405 if method is not POST",
     (method) => {
@@ -47,19 +54,116 @@ describe("validation", () => {
         );
       }
     });
+
+    it("should return error if content-type is not application/json", () => {
+      const req = {
+        method: "POST",
+        headers: {
+          ...validHeaders,
+          "content-type": "text/plain",
+        },
+        body: null,
+      } as unknown as Request;
+
+      const result = validateRequest(req);
+
+      expect(result.success).toBe(false);
+      if (result.success === false) {
+        expect(result.status).toBe(422);
+        expect(result.error.properties).toEqual(
+          expect.objectContaining({
+            headers: {
+              errors: [],
+              properties: {
+                "content-type": {
+                  errors: ['Invalid input: expected "application/json"'],
+                },
+              },
+            },
+          }),
+        );
+      }
+    });
+
+    it("should return error if x-signature is not a valid sha256 hash", () => {
+      const req = {
+        method: "POST",
+        headers: {
+          ...validHeaders,
+          "x-signature": "invalid-signature",
+        },
+        body: null,
+      } as unknown as Request;
+
+      const result = validateRequest(req);
+
+      expect(result.success).toBe(false);
+      if (result.success === false) {
+        expect(result.status).toBe(422);
+        expect(result.error.properties).toEqual(
+          expect.objectContaining({
+            headers: {
+              errors: [],
+              properties: {
+                "x-signature": {
+                  errors: ["Invalid sha256_hex"],
+                },
+              },
+            },
+          }),
+        );
+      }
+    });
+
+    it("should return error if x-license-id is not a string", () => {
+      const req = {
+        method: "POST",
+        headers: {
+          ...validHeaders,
+          "x-license-id": 12345,
+        },
+        body: null,
+      } as unknown as Request;
+
+      const result = validateRequest(req);
+
+      expect(result.success).toBe(false);
+      if (result.success === false) {
+        expect(result.status).toBe(422);
+        expect(result.error.properties).toEqual(
+          expect.objectContaining({
+            headers: {
+              errors: [],
+              properties: {
+                "x-license-id": {
+                  errors: ["Invalid input: expected string, received number"],
+                },
+              },
+            },
+          }),
+        );
+      }
+    });
+
+    it("should pass validation with valid headers", () => {
+      const req = {
+        method: "POST",
+        headers: validHeaders,
+        body: [],
+      } as unknown as Request;
+
+      const result = validateRequest(req);
+
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("body validation", () => {
-    const validHeaders = {
-      "x-signature":
-        "35926ea99afa0cfef54d332f23d55572df9ac657a0e2fdd8dbeb4ebe01fa126e",
-      "x-license-id": "validlicenseid",
-      "content-type": "application/json",
+    const validBody = {
+      id: "692caaf7-62d2-45fb-ab68-4739362fadfa",
+      version: "1.0",
+      timestamp: new Date().toISOString(),
     };
-
-    const validUUID = "692caaf7-62d2-45fb-ab68-4739362fadfa";
-    const validTimestamp = new Date().toISOString();
-    const validVersion = "1.0";
 
     it("should return error if body is not an array", () => {
       const req = {
@@ -89,9 +193,8 @@ describe("validation", () => {
         headers: validHeaders,
         body: [
           {
+            ...validBody,
             id: "not-a-uuid", // Invalid UUID
-            version: validVersion,
-            timestamp: validTimestamp,
           },
         ],
       } as unknown as Request;
@@ -127,8 +230,7 @@ describe("validation", () => {
         headers: validHeaders,
         body: [
           {
-            id: validUUID,
-            version: validVersion,
+            ...validBody,
             timestamp: "invalid-timestamp",
           },
         ],
@@ -165,9 +267,8 @@ describe("validation", () => {
         headers: validHeaders,
         body: [
           {
-            id: validUUID,
+            ...validBody,
             version: { key: "value" },
-            timestamp: validTimestamp,
           },
         ],
       } as unknown as Request;
@@ -203,9 +304,7 @@ describe("validation", () => {
       "should return error for missing body property",
       (missingProperty) => {
         const body = {
-          id: validUUID,
-          version: validVersion,
-          timestamp: validTimestamp,
+          ...validBody,
         };
 
         delete body[missingProperty as keyof typeof body];
@@ -255,9 +354,7 @@ describe("validation", () => {
         headers: validHeaders,
         body: [
           {
-            id: validUUID,
-            version: validVersion,
-            timestamp: validTimestamp,
+            ...validBody,
             ...extraProperties,
           },
         ],
@@ -269,9 +366,7 @@ describe("validation", () => {
       if (result.success) {
         expect(result.data.body[0]).toEqual(
           expect.objectContaining({
-            id: validUUID,
-            version: validVersion,
-            timestamp: validTimestamp,
+            ...validBody,
             ...extraProperties,
           }),
         );
