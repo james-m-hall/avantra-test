@@ -1,4 +1,5 @@
 import { z } from "zod";
+import "dotenv/config";
 
 const ConfigSchema = z.object({
   projectId: z.string().min(1),

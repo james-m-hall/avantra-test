@@ -44,4 +44,6 @@ Swapping the `GCP_PROJECT_ID` for the deployment project ID and `PUBSUB_TOPIC_NA
 
 ## Running tests
 
-Run `npm run test`
+First run the pub sub emulator by running `docker compose up -d`
+
+Then to run the tests run `npm run test`
