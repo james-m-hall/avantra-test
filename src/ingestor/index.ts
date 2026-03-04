@@ -61,6 +61,7 @@ http("Ingestor", async (req, res) => {
       bodyForSignature,
       signature,
       license || Buffer.from("WILL NOT MATCH VALUE"),
+      loggerWithRequestTrace,
     )
   ) {
     return res.status(401).send(signatureValidationOrMissingLicenseError);

@@ -41,3 +41,7 @@ gcloud run deploy ingestor-http-function --source . --function Ingestor --base-i
 ```
 
 Swapping the `GCP_PROJECT_ID` for the deployment project ID and `PUBSUB_TOPIC_NAME` for a topic to publish messages to.
+
+## Running tests
+
+Run `npm run test`

@@ -13,15 +13,13 @@ interface ValidationSuccess {
   data: z.infer<typeof Input>;
 }
 
-interface ValidationFailure<T extends ErrorResponse> {
+interface ValidationFailure {
   success: false;
-  error: T;
+  error: ValidationErrorResponse;
   status: number;
 }
 
-type ValidationResult<T extends ErrorResponse> =
-  | ValidationSuccess
-  | ValidationFailure<T>;
+type ValidationResult = ValidationSuccess | ValidationFailure;
 
 // Lowercased header names to match req.headers which has lowercased header names
 const HeadersInput = z.object({
@@ -47,9 +45,7 @@ const Input = z.object({
   body: BodyInput,
 });
 
-export const validateRequest = (
-  req: Request,
-): ValidationResult<ErrorResponse> => {
+export const validateRequest = (req: Request): ValidationResult => {
   if (req.method !== "POST") {
     const error: ErrorResponse = {
       errors: ["Unsupported HTTP method. Only POST is allowed."],
